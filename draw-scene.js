@@ -1,4 +1,4 @@
-function drawScene(gl, programInfo, buffers, squareRotation) {
+function drawScene(gl, programInfo, buffers, texture, cubeRotation) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -35,13 +35,29 @@ function drawScene(gl, programInfo, buffers, squareRotation) {
     mat4.rotate(
         modelViewMatrix, // destination matrix
         modelViewMatrix, // matrix to rotate
-        squareRotation, // amount to rotate in radians
-        [0, 1, 1], // axis to rotate around
+        cubeRotation, // amount to rotate in radians
+        [0, 0, 1], // axis to rotate around
+    ) // x, y, z axis
+
+    mat4.rotate(
+        modelViewMatrix, // destination matrix
+        modelViewMatrix, // matrix to rotate
+        cubeRotation * 0.7, // amount to rotate in radians
+        [0, 1, 0], // axis to rotate around
+    ) // x, y, z axis
+
+    mat4.rotate(
+        modelViewMatrix, // destination matrix
+        modelViewMatrix, // matrix to rotate
+        cubeRotation * 0.3, // amount to rotate in radians
+        [1, 0, 0], // axis to rotate around
     ) // x, y, z axis
 
     // Set attributes
     setPositionAttribute(gl, buffers, programInfo);
-    setColorAttribute(gl, buffers, programInfo);
+    setTextureAttribute(gl, buffers, programInfo);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
 
     gl.useProgram(programInfo.program);
 
@@ -57,10 +73,17 @@ function drawScene(gl, programInfo, buffers, squareRotation) {
         modelViewMatrix,
     );
 
+    gl.activeTexture(gl.TEXTURE0);
+
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+
     {
+        const vertexCount = 36;
+        const type = gl.UNSIGNED_SHORT;
         const offset = 0;
-        const vertexCount = 4;
-        gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
     }
 }
 
@@ -68,7 +91,7 @@ function drawScene(gl, programInfo, buffers, squareRotation) {
 // into the vertexPosition attribute
 
 function setPositionAttribute(gl, buffers, programInfo) {
-    const numComponents = 2; // pull out 2 values per iteration
+    const numComponents = 3; // pull out 2 values per iteration
     const type = gl.FLOAT; // the data in the buffer is 32bit floats
     const normalize = false; // don't normalize the data
     const stride = 0; // how many bytes to get from one set of values to the next
@@ -105,6 +128,24 @@ function setColorAttribute(gl, buffers, programInfo) {
         offset,
     );
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+}
+
+function setTextureAttribute(gl, buffers, programInfo) {
+    const num = 2;
+    const type = gl.FLOAT;
+    const normalize = false;
+    const stride = 0;
+    const offset = 0;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
+    gl.vertexAttribPointer(
+        programInfo.attribLocations.textureCoord,
+        num,
+        type,
+        normalize,
+        stride,
+        offset,
+    );
+    gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
 }
 
 export { drawScene };
